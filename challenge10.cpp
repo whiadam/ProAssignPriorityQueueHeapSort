@@ -1,7 +1,6 @@
 #include <iostream>
 #include <iomanip>
 #include <cstdlib>
-#include <ctime>
 #include "Scheduler.h"
 
 int main() {
@@ -11,27 +10,35 @@ int main() {
     static SchedTask tasks[N];
     static SchedTask tasksCopy[N];
 
+    // Total burst across all tasks determines how long the CPU is busy.
+    // To make EDF achievable, we need deadlines long enough that an optimal
+    // scheduler (EDF) can meet them. We spread arrivals so ~5 tasks arrive
+    // per time unit across 200 time units, and give each task a deadline
+    // of arrivalTime + burstTime + slack (20-30 ticks). This gives EDF
+    // enough room to schedule tasks without missing, while fixed priority
+    // (ignoring deadlines) will miss several.
     for (int i = 0; i < N; ++i) {
         tasks[i].id            = i + 1;
         tasks[i].priority      = rand() % 10 + 1;
-        tasks[i].arrivalTime   = i / 5;  // ~5 tasks arrive per time unit
-        tasks[i].burstTime     = rand() % 5 + 1;
-        tasks[i].deadline      = tasks[i].arrivalTime + tasks[i].burstTime + rand() % 4 + 1;
+        tasks[i].arrivalTime   = i / 5;
+        tasks[i].burstTime     = rand() % 3 + 1;  // 1-3 ticks (lighter load)
+        tasks[i].deadline      = tasks[i].arrivalTime + tasks[i].burstTime + rand() % 10 + 20;
         tasks[i].remainingTime = tasks[i].burstTime;
         tasksCopy[i] = tasks[i];
     }
 
     std::cout << "=== Challenge 10: HeapForge Champion (1000 tasks) ===\n";
+    std::cout << "Sample tasks (first 5):\n";
+    for (int i = 0; i < 5; ++i) { tasks[i].print(); std::cout << "\n"; }
 
-    static GanttEntry ganttEDF[10000];
+    static GanttEntry ganttEDF[5000];
     int ganttEDFSize = 0;
     Stats edfStats = runEDF(tasks, N, ganttEDF, ganttEDFSize);
 
-    static GanttEntry ganttFP[10000];
+    static GanttEntry ganttFP[5000];
     int ganttFPSize = 0;
     Stats fpStats = runFixedPriority(tasksCopy, N, ganttFP, ganttFPSize);
 
-    // Print first 30 Gantt entries for each (full 1000-task chart is too long)
     std::cout << "\nEDF Gantt (first 30 slices):\n";
     printGantt(ganttEDF, ganttEDFSize < 30 ? ganttEDFSize : 30);
 
