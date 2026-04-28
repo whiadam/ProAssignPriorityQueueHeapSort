@@ -3,8 +3,7 @@
 #define HEAPMASTER_HPP
 
 #include "HeapMaster.h"
-
-// TODO: implement ALL functions here
+#include <cmath>
 
 template<typename T, int MAX_SIZE, typename Compare>
 void HeapMaster<T, MAX_SIZE, Compare>::heapifyUp(int i) {
@@ -105,20 +104,23 @@ void HeapMaster<T, MAX_SIZE, Compare>::printHeap() const {
         std::cout << "(empty)\n";
         return;
     }
-    int levelStart = 0;
-    int levelSize = 1;
-    int i = 0;
-    while (i < sz) {
-        for (int j = 0; j < levelSize && i < sz; ++j, ++i) {
-            std::cout << data[i] << " ";
+    int height = (int)std::log2(sz) + 1;
+    int idx = 0;
+    for (int level = 0; level < height && idx < sz; ++level) {
+        int nodesAtLevel = 1 << level;
+        int gap = (1 << (height - level)) - 1;
+        int between = (1 << (height - level + 1)) - 1;
+        for (int j = 0; j < nodesAtLevel && idx < sz; ++j) {
+            if (j == 0) {
+                for (int s = 0; s < gap * 2; ++s) std::cout << ' ';
+            } else {
+                for (int s = 0; s < between * 2; ++s) std::cout << ' ';
+            }
+            std::cout << std::setw(2) << data[idx++];
         }
         std::cout << "\n";
-        levelStart = levelStart * 2 + 1;
-        levelSize *= 2;
     }
 }
-
-// helper for heapSort on raw arrays
 
 template<typename T, typename Compare>
 void heapifyDownArray(T arr[], int n, int i, Compare comp) {
